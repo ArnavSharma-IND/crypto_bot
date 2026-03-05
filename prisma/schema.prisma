@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String?
+  email        String   @unique
+  password     String?
+  image        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  trades       Trade[]
+  predictions  Prediction[]
+  signals      Signal[]
+}
+
+model Asset {
+  id           String       @id @default(cuid())
+  symbol       String       @unique
+  type         AssetType
+  exchange     String?
+  marketData   MarketData[]
+  predictions  Prediction[]
+  signals      Signal[]
+  trades       Trade[]
+}
+
+model Trade {
+  id           String      @id @default(cuid())
+  userId       String
+  assetId      String
+  side         TradeSide
+  quantity     Float
+  entryPrice   Float
+  exitPrice    Float?
+  stopLoss     Float?
+  target1      Float?
+  target2      Float?
+  pnl          Float?
+  status       TradeStatus @default(OPEN)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  user         User        @relation(fields: [userId], references: [id])
+  asset        Asset       @relation(fields: [assetId], references: [id])
+}
+
+model Prediction {
+  id            String   @id @default(cuid())
+  userId         String?
+  assetId        String
+  trend          Trend
+  confidence     Float
+  reasoning      String
+  timeframe      String
+  createdAt      DateTime @default(now())
+
+  user           User?    @relation(fields: [userId], references: [id])
+  asset          Asset    @relation(fields: [assetId], references: [id])
+}
+
+model Signal {
+  id            String   @id @default(cuid())
+  userId         String?
+  assetId        String
+  signal         SignalType
+  entryPrice     Float
+  stopLoss       Float
+  target1        Float
+  target2        Float
+  riskLevel      RiskLevel
+  riskPercentage Float
+  createdAt      DateTime @default(now())
+
+  user           User?    @relation(fields: [userId], references: [id])
+  asset          Asset    @relation(fields: [assetId], references: [id])
+}
+
+model MarketData {
+  id           String   @id @default(cuid())
+  assetId       String
+  price         Float
+  volume        Float
+  rsi           Float?
+  macd          Float?
+  bollUpper     Float?
+  bollLower     Float?
+  movingAvg9    Float?
+  movingAvg21   Float?
+  sentiment     Float?
+  capturedAt    DateTime @default(now())
+
+  asset         Asset    @relation(fields: [assetId], references: [id])
+}
+
+enum AssetType {
+  CRYPTO
+  INDEX
+  STOCK
+  FUTURES
+  OPTIONS
+}
+
+enum TradeSide {
+  LONG
+  SHORT
+}
+
+enum TradeStatus {
+  OPEN
+  CLOSED
+}
+
+enum Trend {
+  BULLISH
+  BEARISH
+  SIDEWAYS
+}
+
+enum SignalType {
+  LONG
+  SHORT
+  HOLD
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
